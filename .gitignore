@@ -1,0 +1,34 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Built applications and packaging state
+build/
+dist/
+release/
+*.spec
+*.exe
+*.zip
+
+# Player data and error logs
+little-tides-save.json
+little-tides-save.tmp
+little-tides-error.txt
+
+# Generated check/preview images (tracked art lives in docs/images)
+/*-test.png
+/controls-v2.png
+/game-view-v2.png
+art-previews/
+
+# Local editor/OS state and secrets
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
