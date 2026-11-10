@@ -9,7 +9,7 @@ on:
       version:
         description: 'Version to publish (for example v0.1.0)'
         required: true
-        default: 'v0.1.0'
+        default: 'v0.1.1'
         type: string
 
 permissions:
@@ -77,6 +77,8 @@ jobs:
         run: python natural_play_check.py
       - name: Presentation and input checks
         run: python check_presentation.py
+      - name: Water-entry and native fish transparency regressions
+        run: python check_regressions.py build/fish-transparency.png
       - name: Build and smoke-test native package
         env:
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
