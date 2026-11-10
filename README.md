@@ -4,6 +4,8 @@ A standalone 2D fishing game set on the shore of Big Whiteshell Lake in Manitoba
 
 ![The starting lake](docs/images/game.png)
 
+[Download the latest Windows and Mac builds](https://github.com/matt872000/little-tides/releases/latest). See [changes](CHANGELOG.md) for fixes in each version.
+
 ## Current playable build
 
 - Cast with a flick of the stick, let the hooked worm sink, and gather line by hand.
@@ -70,9 +72,10 @@ Run that command on Windows for Windows, on an Apple Silicon Mac for arm64, or o
 .\.venv\Scripts\python check_game.py
 .\.venv\Scripts\python natural_play_check.py
 .\.venv\Scripts\python check_presentation.py
+.\.venv\Scripts\python check_regressions.py
 ```
 
-These run with SDL's offscreen driver. The physics/state checks and five seeded cast-to-catch sessions pass. Rendering and the packaged Windows launch have also been checked. Native desktop input still needs manual playtesting.
+The first three checks run with SDL's offscreen driver. `check_regressions.py` also checks fish compositing in a hidden native window, including macOS's Cocoa driver. Water-entry checks catch surface skipping and bottom bounce. Every release checks the packaged application on its native window driver. Interactive input still needs manual playtesting.
 
 ## Project files
 

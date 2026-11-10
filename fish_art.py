@@ -14,9 +14,15 @@ FIELD_MARKS={
  'sucker':'Rounded cylindrical body, single soft dorsal, blunt snout, downward fleshy lips.',
 }
 
+def transparent_surface(size):
+    # Do not inherit the window's pixel format or initial alpha on macOS.
+    surface=pygame.Surface(size,pygame.SRCALPHA,32)
+    surface.fill((0,0,0,0))
+    return surface
+
 def make_sprite(species):
     L=420;CY=116;HEIGHT=228
-    s=pygame.Surface((L+10,HEIGHT),pygame.SRCALPHA)
+    s=transparent_surface((L+10,HEIGHT))
     def point(u,v):return (round(5+u*L),round(CY+v*L))
     def polygon(target,c,pts):pygame.draw.polygon(target,c,[point(x,y) for x,y in pts])
     def stroke(c,pts,w=1,target=s):pygame.draw.lines(target,c,False,[point(x,y) for x,y in pts],w)
@@ -72,8 +78,8 @@ def make_sprite(species):
       'sucker':[(.14,-.022),(.26,-.057),(.43,-.09),(.62,-.104),(.78,-.089),(.89,-.061),(.956,-.033),(.985,-.003),(.978,.033),(.949,.054),(.91,.064),(.82,.082),(.65,.102),(.45,.101),(.28,.062),(.14,.023)],
     }
     outline=outlines[species]
-    mask=pygame.Surface(s.get_size(),pygame.SRCALPHA);polygon(mask,'white',outline)
-    body=pygame.Surface(s.get_size(),pygame.SRCALPHA)
+    mask=transparent_surface(s.get_size());polygon(mask,'white',outline)
+    body=transparent_surface(s.get_size())
     def lerp_color(a,b,t):
         a=pygame.Color(a);b=pygame.Color(b)
         return tuple(round(a[i]*(1-t)+b[i]*t) for i in range(3))
@@ -82,7 +88,7 @@ def make_sprite(species):
         u=max(0,min(1,(yy-top)/(bottom-top)))
         c=lerp_color(back,side,u/.57) if u<.57 else lerp_color(side,belly,(u-.57)/.43)
         pygame.draw.line(body,c,(0,yy),(L+10,yy))
-    detail=pygame.Surface(s.get_size(),pygame.SRCALPHA)
+    detail=transparent_surface(s.get_size())
     if species=='perch':
         # Seven tapered bars, with the back continuing into each bar.
         for i in range(7):
@@ -143,7 +149,10 @@ def draw_fish(owner,fish,x,y,scale=1,alpha=255,face=None):
     # Shared physical scale makes a 90 cm pike visibly longer than a 25 cm perch.
     length=max(14,fish.cm*.82)*scale
     if face is None:face=fish.vel.x>=0
-    key=(species,max(14,round(length)),bool(face))
+    # Bake depth opacity into pixel alpha, keeping global alpha at 255.
+    # This also keeps transparent margins transparent on the native Mac blitter.
+    opacity=max(0,min(255,round(alpha)))
+    key=(species,max(14,round(length)),bool(face),opacity)
     cache=owner.fish_sprite_cache
     if key not in cache:
         canonical_key=('canonical',species)
@@ -151,6 +160,7 @@ def draw_fish(owner,fish,x,y,scale=1,alpha=255,face=None):
         source=cache[canonical_key]
         image=pygame.transform.smoothscale(source,(key[1],max(7,round(key[1]*source.get_height()/source.get_width()))))
         if not face:image=pygame.transform.flip(image,True,False)
+        image.fill((255,255,255,opacity),special_flags=pygame.BLEND_RGBA_MULT)
         cache[key]=image
-    image=cache[key];image.set_alpha(alpha)
+    image=cache[key]
     owner.canvas.blit(image,image.get_rect(center=(x,y)))

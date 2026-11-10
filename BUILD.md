@@ -15,6 +15,7 @@ Run deterministic checks:
 .\.venv\Scripts\python check_game.py
 .\.venv\Scripts\python natural_play_check.py
 .\.venv\Scripts\python check_presentation.py
+.\.venv\Scripts\python check_regressions.py
 ```
 
 Build the native application folder:
@@ -60,5 +61,8 @@ notarized. An Intel and an Apple Silicon build are provided separately.
 
 The GitHub Actions `Desktop releases` workflow runs this on Windows x64,
 macOS arm64, and macOS x64. It publishes only after all builds and checks pass.
+The water-entry and transparency regressions use a hidden native window (Cocoa
+on Mac), and the packaged smoke test uses `--native-display`. This catches pixel
+format differences that the dummy video driver alone cannot exercise.
 Use its manual version input, or push a new `v*` tag. The first GitHub release
 is `v0.1.0`; local art iterations v1/v2/v3 precede that semantic version.

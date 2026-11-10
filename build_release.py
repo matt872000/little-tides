@@ -33,7 +33,7 @@ def main():
     subprocess.run(command,cwd=ROOT,check=True)
     executable=dist/'Little Tides'/'Little Tides.exe' if sys.platform=='win32' else dist/'Little Tides.app'/'Contents'/'MacOS'/'Little Tides'
     smoke=ROOT/'build'/f'smoke-{target}.png'
-    subprocess.run([str(executable),'--smoke-test',str(smoke)],cwd=ROOT,check=True,timeout=90)
+    subprocess.run([str(executable),'--smoke-test',str(smoke),'--native-display'],cwd=ROOT,check=True,timeout=90)
     if not smoke.is_file() or smoke.stat().st_size<1000:raise RuntimeError('Packaged game did not render a smoke-test frame')
     stage=ROOT/'build'/'release-stage'/name
     if stage.exists():
@@ -67,7 +67,8 @@ def main():
         shutil.make_archive(str(archive.with_suffix('')),'zip',stage.parent,stage.name)
     manifest={'version':args.version,'target':target,'commit':os.environ.get('GITHUB_SHA','local'),
               'archive':archive.name,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),
-              'packaged_smoke_test':'passed','apple_notarized':False if sys.platform=='darwin' else None}
+              'packaged_smoke_test':'passed','native_display_smoke_test':'passed',
+              'apple_notarized':False if sys.platform=='darwin' else None}
     (release/f'manifest-{target}.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(manifest,indent=2))
 

@@ -62,9 +62,10 @@ class Game(GameView):
     def __init__(self,headless=False):
         pygame.init()
         self.headless=headless
-        self.screen=pygame.display.set_mode((1280,800),pygame.RESIZABLE)
+        self.screen=pygame.display.set_mode((1280,800),pygame.RESIZABLE | (pygame.HIDDEN if headless else 0))
         pygame.display.set_caption('Little Tides')
-        self.canvas=pygame.Surface((W,H))
+        # The scene is opaque RGB, independent of the macOS window's alpha mask.
+        self.canvas=pygame.Surface((W,H),depth=32,masks=(0xff0000,0xff00,0xff,0))
         self.clock=pygame.time.Clock();self.running=True
         self.fonts={};self.buttons=[];self.mouse=(0,0);self.t=0.;self.accumulator=0
         self.rng=random.Random();self.angle=-.62;self.target_angle=-.62
@@ -314,7 +315,8 @@ class Game(GameView):
 
 def main():
     if '--smoke-test' in sys.argv:
-        os.environ['SDL_VIDEODRIVER']='dummy';os.environ['SDL_AUDIODRIVER']='dummy'
+        if '--native-display' not in sys.argv:os.environ['SDL_VIDEODRIVER']='dummy'
+        os.environ['SDL_AUDIODRIVER']='dummy'
         g=Game(headless=True)
         for _ in range(120):g.physics_step(1/120)
         g.draw()

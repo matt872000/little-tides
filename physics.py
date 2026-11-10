@@ -15,14 +15,25 @@ HOOK_DENSITY = 7800.0
 TIP_MASS = WORM_MASS + HOOK_MASS
 TIP_VOLUME = WORM_MASS / WORM_DENSITY + HOOK_MASS / HOOK_DENSITY
 TIP_AREA = .00018
+SUBMERGED_GRAVITY = GRAVITY * (1 - WATER_DENSITY * TIP_VOLUME / TIP_MASS)
+WATER_DRAG = .5 * WATER_DENSITY * .95 * TIP_AREA / TIP_MASS
 
 def tip_acceleration(velocity, underwater, current=.025):
     if underwater:
         relative = velocity - V(current, 0)
-        buoyancy = WATER_DENSITY * TIP_VOLUME * GRAVITY
-        drag = relative * relative.length() * (.5 * WATER_DENSITY * .95 * TIP_AREA)
-        return V(0, GRAVITY - buoyancy / TIP_MASS) - drag / TIP_MASS
+        return V(0, SUBMERGED_GRAVITY) - relative * relative.length() * WATER_DRAG
     return V(.03, GRAVITY) - velocity * .035
+
+def advance_tip_velocity(velocity, underwater, dt, current=.025):
+    if not underwater:
+        return velocity + tip_acceleration(velocity, False) * dt
+    # Integrate quadratic drag analytically between two half gravity kicks.
+    # An explicit force step overshoots at casting speeds and reverses the
+    # hook on water entry. Drag must dissipate motion, never make it bounce.
+    kick = V(0, SUBMERGED_GRAVITY * dt * .5)
+    flow = V(current, 0)
+    relative = velocity + kick - flow
+    return flow + relative / (1 + WATER_DRAG * relative.length() * dt) + kick
 
 class Handline:
     N = 26
@@ -64,15 +75,17 @@ class Handline:
             self.previous[i]=V(p)
             wet=p.y>=0
             if i==self.N-1:
-                # Substeps keep quadratic fluid drag numerically stable.
-                acc=tip_acceleration(vel,wet)
-                if fish_force is not None:
+                if fish_force is None:
+                    vel=advance_tip_velocity(vel,wet,dt)
+                else:
                     # A hooked fish adds inertia and the force of its swimming.
                     acc=V(fish_force)-vel*(1.7 if wet else .2)+V(0,.25)
+                    vel+=acc*dt
             else:
                 # Very thin nylon has a small excess submerged weight.
                 acc=V(.025, .34 if wet else GRAVITY)-vel*(2.8 if wet else .15)
-            self.nodes[i]=p+vel*dt+acc*dt*dt
+                vel+=acc*dt
+            self.nodes[i]=p+vel*dt
         seg=self.length/(self.N-1)
         max_stretch=0.0
         # Rope resists extension but never pushes nodes apart: slack is real.
